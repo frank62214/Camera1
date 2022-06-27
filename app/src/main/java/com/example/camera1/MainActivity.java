@@ -100,12 +100,21 @@ public class MainActivity extends AppCompatActivity {
                     String packageName = resolveInfo.activityInfo.packageName;
                     MainActivity.this.grantUriPermission(packageName, contentUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
-
+                if(ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                        Toast.makeText(MainActivity.this, "權限開啟", Toast.LENGTH_SHORT).show();
+                    }else{
+                        Toast.makeText(MainActivity.this, "權限開啟1", Toast.LENGTH_SHORT).show();
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+                    }
+                }
                 if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
                     if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.CAMERA)) {
                         //ToastUtil.longToadt(this, getString(R.string.you_have_cut_down_the_permission));
                         System.out.println("沒權限");
+                        Toast.makeText(MainActivity.this, "權限開啟", Toast.LENGTH_SHORT).show();
                     }else{
+                        Toast.makeText(MainActivity.this, "權限開啟1", Toast.LENGTH_SHORT).show();
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 100);
                     }
                 }else {
@@ -140,9 +149,9 @@ public class MainActivity extends AppCompatActivity {
                 //intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri_1);
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
                 Intent intentBc = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.N){
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                }
+//                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.N){
+//                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//                }
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 List<ResolveInfo> resInfoList = MainActivity.this.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
                 for (ResolveInfo resolveInfo : resInfoList) {
