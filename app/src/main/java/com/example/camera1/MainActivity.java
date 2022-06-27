@@ -50,32 +50,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Check_Permission();
 
-        boolean cameraHasGone = checkSelfPermission(Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED;
 
-        boolean externalHasGone = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            String[] permissions;
-            if (!cameraHasGone && !externalHasGone) {//如果兩個權限都未取得
-                permissions = new String[2];
-                permissions[0] = Manifest.permission.CAMERA;
-                permissions[1] = Manifest.permission.WRITE_EXTERNAL_STORAGE;
-            } else if (!cameraHasGone) {//如果只有相機權限未取得
-                permissions = new String[1];
-                permissions[0] = Manifest.permission.CAMERA;
-            } else if (!externalHasGone) {//如果只有存取權限未取得
-                permissions = new String[1];
-                permissions[0] = Manifest.permission.WRITE_EXTERNAL_STORAGE;
-            } else {
-                //tvRes.setText("相機權限已取得\n儲存權限已取得");
-                Toast.makeText(MainActivity.this, "相機權限已取得\\n儲存權限已取得\"", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            requestPermissions(permissions, 100);
-        }
 
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
 
@@ -261,21 +238,30 @@ public class MainActivity extends AppCompatActivity {
         //tvRes.setText(word.toString());
     }
     private void Check_Permission(){
-        if(ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                Toast.makeText(MainActivity.this, "儲存權限未開啟", Toast.LENGTH_SHORT).show();
-            }else{
-                Toast.makeText(MainActivity.this, "儲存權限開啟", Toast.LENGTH_SHORT).show();
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+        boolean cameraHasGone = checkSelfPermission(Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED;
+
+        boolean externalHasGone = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            String[] permissions;
+            if (!cameraHasGone && !externalHasGone) {//如果兩個權限都未取得
+                permissions = new String[2];
+                permissions[0] = Manifest.permission.CAMERA;
+                permissions[1] = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+            } else if (!cameraHasGone) {//如果只有相機權限未取得
+                permissions = new String[1];
+                permissions[0] = Manifest.permission.CAMERA;
+            } else if (!externalHasGone) {//如果只有存取權限未取得
+                permissions = new String[1];
+                permissions[0] = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+            } else {
+                //tvRes.setText("相機權限已取得\n儲存權限已取得");
+                Toast.makeText(MainActivity.this, "相機權限已取得\\n儲存權限已取得\"", Toast.LENGTH_SHORT).show();
+                return;
             }
-        }
-        if(ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
-            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.CAMERA)) {
-                Toast.makeText(MainActivity.this, "相機權限未開啟", Toast.LENGTH_SHORT).show();
-            }else{
-                Toast.makeText(MainActivity.this, "相機權限開啟", Toast.LENGTH_SHORT).show();
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 100);
-            }
+            requestPermissions(permissions, 100);
         }
     }
 }
