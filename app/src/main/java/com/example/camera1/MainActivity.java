@@ -1,5 +1,7 @@
 package com.example.camera1;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -42,10 +44,38 @@ public class MainActivity extends AppCompatActivity {
     private String filename;
     private Environment Enviroment;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        boolean cameraHasGone = checkSelfPermission(Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED;
+
+        boolean externalHasGone = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            String[] permissions;
+            if (!cameraHasGone && !externalHasGone) {//如果兩個權限都未取得
+                permissions = new String[2];
+                permissions[0] = Manifest.permission.CAMERA;
+                permissions[1] = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+            } else if (!cameraHasGone) {//如果只有相機權限未取得
+                permissions = new String[1];
+                permissions[0] = Manifest.permission.CAMERA;
+            } else if (!externalHasGone) {//如果只有存取權限未取得
+                permissions = new String[1];
+                permissions[0] = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+            } else {
+                //tvRes.setText("相機權限已取得\n儲存權限已取得");
+                Toast.makeText(MainActivity.this, "相機權限已取得\\n儲存權限已取得\"", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            requestPermissions(permissions, 100);
+        }
 
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
 
@@ -60,6 +90,9 @@ public class MainActivity extends AppCompatActivity {
         takePhotoBn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                //Check_Permission();
+
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
                 Date date = new Date(System.currentTimeMillis());
                 filename = format.format(date);
@@ -86,37 +119,27 @@ public class MainActivity extends AppCompatActivity {
                 imageUri   = Uri.fromFile(outputImage);
                 //imageUri_1 = Uri.fromFile(outputImage_1);
                 //String test = outputImage.getPath();
-                contentUri = FileProvider.getUriForFile(MainActivity.this, getApplicationContext().getApplicationContext().getPackageName() + ".provider", outputImage);
+                contentUri = FileProvider.getUriForFile(MainActivity.this, MainActivity.this.getPackageName() + ".provider", outputImage);
                 System.out.println(contentUri);
                 //imageUri = Uri.fromFile(new File(filename));
                 Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
                 //intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
-
-
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                //Intent chooser = Intent.createChooser(intentShareFile, "Share File");
                 //URI Permission
                 List<ResolveInfo> resInfoList = MainActivity.this.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
                 for (ResolveInfo resolveInfo : resInfoList) {
                     String packageName = resolveInfo.activityInfo.packageName;
                     MainActivity.this.grantUriPermission(packageName, contentUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    System.out.println("FYBR");
                 }
-                if(ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                        Toast.makeText(MainActivity.this, "權限開啟", Toast.LENGTH_SHORT).show();
-                    }else{
-                        Toast.makeText(MainActivity.this, "權限開啟1", Toast.LENGTH_SHORT).show();
-                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
-                    }
-                }
-                if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.CAMERA)) {
-                        //ToastUtil.longToadt(this, getString(R.string.you_have_cut_down_the_permission));
-                        System.out.println("沒權限");
-                        Toast.makeText(MainActivity.this, "權限開啟", Toast.LENGTH_SHORT).show();
-                    }else{
-                        Toast.makeText(MainActivity.this, "權限開啟1", Toast.LENGTH_SHORT).show();
-                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 100);
-                    }
+                intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                   ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+                    //Check_Permission();
                 }else {
 
                     startActivityForResult(intent, TAKE_PHOTO);
@@ -130,12 +153,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
+        //Toast.makeText(MainActivity.this, "ActivityResult resultCode:" + resultCode, Toast.LENGTH_SHORT).show();
+        System.out.println("ActivityResult resultCode:" + resultCode);
         if(resultCode != RESULT_OK){
             Toast.makeText(MainActivity.this, "ActivityResult resultCode error", Toast.LENGTH_SHORT).show();
             return;
         }
         switch(requestCode){
             case TAKE_PHOTO:
+                System.out.println("TAKE_PHOTO");
                 Intent intent = new Intent("com.android.camera.action.CROP");
                 //intent.setDataAndType(imageUri, "image/*");
                 intent.setDataAndType(contentUri, "image/*");
@@ -152,7 +178,10 @@ public class MainActivity extends AppCompatActivity {
 //                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.N){
 //                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 //                }
+                intentBc.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intentBc.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 List<ResolveInfo> resInfoList = MainActivity.this.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
                 for (ResolveInfo resolveInfo : resInfoList) {
                     String packageName = resolveInfo.activityInfo.packageName;
@@ -166,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, CROP_PHOTO);
                 break;
             case CROP_PHOTO:
+                System.out.println("CROP_PHOTO");
                 try{
                     //Bitmap bitmap = BitmapFactory.decodeStream(
                     //        getContentResolver().openInputStream(imageUri));
@@ -200,6 +230,52 @@ public class MainActivity extends AppCompatActivity {
                 break;
             default:
                 break;
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        StringBuffer word = new StringBuffer();
+        switch (permissions.length) {
+            case 1:
+                if (permissions[0].equals(Manifest.permission.CAMERA)) word.append("相機權限");
+                else word.append("儲存權限");
+                if (grantResults[0] == 0) word.append("已取得");
+                else word.append("未取得");
+                word.append("\n");
+                if (permissions[0].equals(Manifest.permission.CAMERA)) word.append("儲存權限");
+                else word.append("相機權限");
+                word.append("已取得");
+
+                break;
+            case 2:
+                for (int i = 0; i < permissions.length; i++) {
+                    if (permissions[i].equals(Manifest.permission.CAMERA)) word.append("相機權限");
+                    else word.append("儲存權限");
+                    if (grantResults[i] == 0) word.append("已取得");
+                    else word.append("未取得");
+                    if (i < permissions.length - 1) word.append("\n");
+                }
+                break;
+        }
+        //tvRes.setText(word.toString());
+    }
+    private void Check_Permission(){
+        if(ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                Toast.makeText(MainActivity.this, "儲存權限未開啟", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(MainActivity.this, "儲存權限開啟", Toast.LENGTH_SHORT).show();
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+            }
+        }
+        if(ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.CAMERA)) {
+                Toast.makeText(MainActivity.this, "相機權限未開啟", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(MainActivity.this, "相機權限開啟", Toast.LENGTH_SHORT).show();
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 100);
+            }
         }
     }
 }
