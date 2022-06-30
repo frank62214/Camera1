@@ -44,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
     private String filename;
     private Environment Enviroment;
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -237,6 +236,7 @@ public class MainActivity extends AppCompatActivity {
         }
         //tvRes.setText(word.toString());
     }
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void Check_Permission(){
         boolean cameraHasGone = checkSelfPermission(Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED;
